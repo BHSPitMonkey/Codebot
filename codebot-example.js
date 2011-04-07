@@ -4,8 +4,8 @@
  * http://github.com/BHSPitMonkey/Codebot
  *
  * Requires:
- * Node.JS (http: *nodejs.org)
- * Jerk (http: *github.com/gf3/Jerk)
+ * Node.JS (http://nodejs.org)
+ * Jerk (http://github.com/gf3/Jerk)
  *
  * How to run:
  * To start, just run the following command:
@@ -22,7 +22,7 @@
  * delivery method, and for the server name specify the IP
  * address or DNS name of this server, followed by the port
  * you chose below, followed by "/notify".  Here's an example:
- * http: *myserver.com:1234/notify 
+ * http://myserver.com:1234/notify 
  * (assuming this server is at myserver.com, and you chose port 1234
  * in the options below).
  * 

@@ -2,13 +2,22 @@ Codebase.com IRC Notifier Bot
 =============================
 
 For codebasehq.com projects
+
 http://github.com/BHSPitMonkey/Codebot
 
 Requires:
 ---------
 
-* Node.JS (http://nodejs.org)
-* Jerk (http://github.com/gf3/Jerk)
+* Node.JS [(homepage)](http://nodejs.org)
+* Jerk [(homepage)](http://github.com/gf3/Jerk)
+
+How to set up:
+--------------
+
+1. Make a copy of codebot-example.js (for example, to codebot.js)
+2. Open your copy in a text editor and configure the settings in the
+section labeled "OPTIONS"
+3. That's it!
 
 How to run:
 -----------
@@ -42,5 +51,5 @@ License and credit:
 -------------------
 
 This script was written by
-Stephen Eisenhauer (http://stepheneisenhauer.com), and is
+Stephen Eisenhauer [(homepage)](http://stepheneisenhauer.com), and is
 released into the public domain.
