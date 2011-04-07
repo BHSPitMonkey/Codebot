@@ -1,5 +1,5 @@
-Codebase.com IRC Notifier Bot
-=============================
+Codebot: IRC Notifier Bot for Codebase
+======================================
 
 For codebasehq.com projects
 
