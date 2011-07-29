@@ -39,6 +39,9 @@
 // Server options (set up which port to listen for notifications on)
 server_port = 9999;	// you should pick an unusual port to use
 
+// Codebase account options
+codebase_version = 4;	// can be 3 or 4, depending on your account
+
 // IRC options (set up which IRC server/channels to connect to, and the nickname)
 var options =
 	{ server: 'irc.freenode.net'
@@ -83,6 +86,74 @@ function boldString(str) {
 	return String.fromCharCode(2) + str + String.fromCharCode(2);
 }
 
+// Parses a codebase JSON notification object and returns needed info
+function parseV3Notification(jsonobj) {
+	var proj;
+	var msg;
+	switch (jsonobj["type"]) {
+		case 'new_ticket':
+			proj = jsonobj["payload"]["project"]["name"];
+			msg = boldString("New ticket") +
+				" #" + jsonobj["payload"]["id"] +
+				" created by " + boldString(jsonobj["payload"]["reporter"]["username"]) +
+				" in " + boldString(jsonobj["payload"]["project"]["name"]) +
+				': "' + jsonobj["payload"]["summary"] +
+				'"';
+			break;
+		case 'update_ticket':
+			proj = jsonobj["payload"]["ticket"]["project"]["name"];
+			msg = boldString("Ticket #" + jsonobj["payload"]["ticket"]["id"]) +
+				" (" + jsonobj["payload"]["ticket"]["summary"] +
+				") " + boldString("updated") +
+				" by " + boldString(jsonobj["payload"]["user"]["username"]) +
+				" in " + boldString(jsonobj["payload"]["ticket"]["project"]["name"]) +
+				': "' + jsonobj["payload"]["content"] +
+				'"';
+			break;
+		case 'push':
+			proj = jsonobj["payload"]["repository"]["project"]["name"];
+			msg = "User " + 
+				boldString(jsonobj["payload"]["user"]["username"] + " pushed") +
+				" to " + boldString(jsonobj["payload"]["repository"]["name"]) +
+				" in " + boldString(jsonobj["payload"]["repository"]["project"]["name"]) +
+				": ";
+			if (jsonobj["payload"]["commits"].length == 1) {
+				msg += jsonobj["payload"]["commits"][0]["message"];
+			}
+			else {
+				msg += "" + jsonobj["payload"]["commits"].length + " commits";
+			}
+			break;
+		
+		default:
+			break;
+	}
+	return {'proj':proj, 'msg',msg};
+}
+function parseV4Notification(jsonobj) {
+	var proj;
+	var msg;
+	var payload = jsonobj['payload'];
+	
+	// If this is a commit notification
+	if (payload && payload['commits'] && payload['commits'].length > 0) {
+		proj = payload['repository']['project']['name'];
+		msg = "User " +
+			boldString(payload['user']['username'] + " pushed") +
+			" to " + boldString(jsonobj["payload"]["repository"]["name"]) +
+			" in " + boldString(jsonobj["payload"]["repository"]["project"]["name"]) +
+			": ";
+		if (payload['commits'].length == 1)
+			msg += payload['commits'][0]['message'];
+		else
+			msg += "" + payload['commits'].length + " commits";
+	}
+	
+	// If this is a ticket notification: TODO
+	
+	return {proj:proj, msg:msg};
+}
+
 // Set up the HTTP server
 var http = require('http'), 
 url = require('url');
@@ -106,52 +177,17 @@ var server = http.createServer(function(req, res){
 					res.writeHead(200);
 					res.end();
 					
-					// Figure out notification type/format
-					var proj;
-					var msg;
-					switch (jsonobj["type"]) {
-						case 'new_ticket':
-							proj = jsonobj["payload"]["project"]["name"];
-							msg = boldString("New ticket") +
-								" #" + jsonobj["payload"]["id"] +
-								" created by " + boldString(jsonobj["payload"]["reporter"]["username"]) +
-								" in " + boldString(jsonobj["payload"]["project"]["name"]) +
-								': "' + jsonobj["payload"]["summary"] +
-								'"';
-							break;
-						case 'update_ticket':
-							proj = jsonobj["payload"]["ticket"]["project"]["name"];
-							msg = boldString("Ticket #" + jsonobj["payload"]["ticket"]["id"]) +
-								" (" + jsonobj["payload"]["ticket"]["summary"] +
-								") " + boldString("updated") +
-								" by " + boldString(jsonobj["payload"]["user"]["username"]) +
-								" in " + boldString(jsonobj["payload"]["ticket"]["project"]["name"]) +
-								': "' + jsonobj["payload"]["content"] +
-								'"';
-							break;
-						case 'push':
-							proj = jsonobj["payload"]["repository"]["project"]["name"];
-							msg = "User " + 
-								boldString(jsonobj["payload"]["user"]["username"] + " pushed") +
-								" to " + boldString(jsonobj["payload"]["repository"]["name"]) +
-								" in " + boldString(jsonobj["payload"]["repository"]["project"]["name"]) +
-								": ";
-							if (jsonobj["payload"]["commits"].length == 1) {
-								msg += jsonobj["payload"]["commits"][0]["message"];
-							}
-							else {
-								msg += "" + jsonobj["payload"]["commits"].length + " commits";
-							}
-							break;
-						
-						default:
-							break;
-					}
+					// Figure out notification details
+					var details;
+					if (codebase_version == 3)
+						details = parseV3Notification(jsonobj);
+					else
+						details = parseV4Notification(jsonobj);
 
 					// Figure out channels
 					var destchans = [];
-					if (proj) {
-						destchans = projects_channels[proj];
+					if (details['proj']) {
+						destchans = projects_channels[details['proj']];
 						// If this project wasn't defined in the options
 						if (!destchans) {
 							// Make destchans an empty array, or an array
@@ -161,9 +197,9 @@ var server = http.createServer(function(req, res){
 					}
 
 					// If we have what we need, go ahead and say the message
-					if ((destchans.length > 0) && msg)
+					if ((destchans.length > 0) && details['msg'])
 						for (var i=0; i<destchans.length; i++)
-							bot.say(destchans[i], msg);
+							bot.say(destchans[i], details['msg']);
 				}
 				catch (e) {
 					console.log('Encountered exception while receiving data from CodeBase: ' + e);

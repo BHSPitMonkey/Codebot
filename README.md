@@ -37,7 +37,8 @@ HTTP module, this server will accept requests from anyone.
 Codebase setup:
 ---------------
 
-In your Codebase notification center, use the HTTP JSON Post
+In your Codebase repository settings (or notification center, if 
+you are still using Codebase V3), use the HTTP JSON Post
 delivery method, and for the server name specify the IP
 address or DNS name of this server, followed by the port
 you chose below, followed by "/notify".  Here's an example:
